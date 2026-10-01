@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mapa de Acesso a Serviços — ADE SAMPA</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --azul-escuro: #0f2c5c;
+      --azul: #1e4fa3;
+      --azul-claro: #3b82f6;
+      --cinza-fundo: #f1f5f9;
+      --cinza-borda: #e2e8f0;
+      --texto: #1e293b;
+      --texto-suave: #64748b;
+      --amarelo: #fef3c7;
+      --amarelo-texto: #92400e;
+      --verde: #1a9850;
+      --vermelho: #d73027;
+    }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+      background: var(--cinza-fundo); color: var(--texto);
+      height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+    }
+    header {
+      background: linear-gradient(135deg, var(--azul-escuro) 0%, var(--azul) 60%, var(--azul-claro) 100%);
+      color: white; padding: 16px 32px;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 12px;
+      box-shadow: 0 4px 12px rgba(15, 44, 92, 0.15);
+      z-index: 1000;
+    }
+    header h1 { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.3px; }
+    .menu { display: flex; gap: 6px; flex-wrap: wrap; }
+    .menu a {
+      color: white; text-decoration: none; font-size: 0.82rem;
+      padding: 6px 12px; border-radius: 6px;
+      background: rgba(255, 255, 255, 0.1); transition: background 0.2s;
+    }
+    .menu a:hover { background: rgba(255, 255, 255, 0.25); }
+    .aviso {
+      background: var(--amarelo); color: var(--amarelo-texto);
+      padding: 8px 32px; font-size: 0.8rem; border-bottom: 1px solid #fde68a;
+    }
+    .layout { display: flex; flex: 1; overflow: hidden; }
+    .sidebar {
+      width: 440px; background: white; padding: 24px;
+      overflow-y: auto; border-right: 1px solid var(--cinza-borda);
+      box-shadow: 2px 0 8px rgba(15, 44, 92, 0.04);
+    }
+    .sidebar h2 {
+      font-size: 0.95rem; color: var(--azul-escuro);
+      margin: 20px 0 10px; font-weight: 700;
+    }
+    .sidebar h2:first-child { margin-top: 0; }
+    .sidebar label {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 0.88rem; color: var(--texto);
+      padding: 10px 12px; margin-bottom: 6px;
+      background: var(--cinza-fundo); border-radius: 8px;
+      cursor: pointer; transition: background 0.2s;
+    }
+    .sidebar label:hover { background: #e2e8f0; }
+    .sidebar input[type="checkbox"] {
+      width: 18px; height: 18px; accent-color: var(--azul-claro); cursor: pointer;
+    }
+    #ranking-descobertos { list-style: none; counter-reset: rank; }
+    #ranking-descobertos li {
+      counter-increment: rank;
+      padding: 10px 12px; margin-bottom: 6px;
+      background: var(--cinza-fundo); border-radius: 8px;
+      font-size: 0.85rem; display: flex; align-items: center; gap: 10px;
+      border-left: 3px solid #ef4444; transition: background 0.2s;
+    }
+    #ranking-descobertos li:hover { background: #e2e8f0; }
+    #ranking-descobertos li::before {
+      content: counter(rank); font-weight: 700; color: #ef4444;
+      font-size: 0.8rem; min-width: 20px; text-align: center;
+      background: white; border-radius: 50%; width: 24px; height: 24px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    #ranking-descobertos li strong { color: var(--azul-escuro); flex: 1; }
+    button {
+      width: 100%; margin-top: 16px; padding: 12px;
+      background: linear-gradient(135deg, var(--azul), var(--azul-claro));
+      color: white; border: none; border-radius: 8px; cursor: pointer;
+      font-size: 0.88rem; font-weight: 600;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    button:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(30, 79, 163, 0.3); }
+    #mapa2 { flex: 1; }
+
+    /* Caixa de explicação */
+    .explicacao {
+      background: #eff6ff;
+      border-left: 3px solid var(--azul-claro);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 0.78rem;
+      line-height: 1.6;
+      color: var(--texto);
+      margin-bottom: 12px;
+    }
+    .explicacao strong { color: var(--azul-escuro); }
+    .explicacao .formula {
+      background: white;
+      padding: 6px 8px;
+      border-radius: 6px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.72rem;
+      margin-top: 6px;
+      display: block;
+      color: var(--azul-escuro);
+    }
+
+    .tabela-dados {
+      margin-top: 8px;
+      font-size: 0.72rem;
+      border-collapse: collapse;
+      width: 100%;
+    }
+    .tabela-dados th, .tabela-dados td {
+      padding: 5px 6px;
+      text-align: left;
+      border-bottom: 1px solid var(--cinza-borda);
+    }
+    .tabela-dados th {
+      background: var(--azul-escuro);
+      color: white;
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+      font-size: 0.68rem;
+      cursor: help;
+    }
+    .tabela-dados tr:nth-child(even) { background: var(--cinza-fundo); }
+    .tabela-dados tr:hover { background: #e2e8f0; }
+
+    .legenda-tabela {
+      font-size: 0.7rem;
+      color: var(--texto-suave);
+      margin-top: 8px;
+      padding: 8px 10px;
+      background: var(--cinza-fundo);
+      border-radius: 6px;
+      line-height: 1.7;
+    }
+    .legenda-tabela b { color: var(--azul-escuro); }
+
+    .legenda {
+      background: white;
+      padding: 10px 14px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      font-size: 0.8rem;
+      line-height: 1.8;
+    }
+    .legenda strong { display: block; margin-bottom: 6px; color: var(--azul-escuro); }
+    .legenda-item { display: flex; align-items: center; gap: 8px; }
+    .legenda-cor {
+      width: 16px; height: 16px; border-radius: 50%;
+      border: 2px solid white;
+      box-shadow: 0 0 2px rgba(0,0,0,0.3);
+    }
+
+    footer {
+      background: var(--azul-escuro); color: rgba(255, 255, 255, 0.7);
+      text-align: center; padding: 10px; font-size: 0.75rem;
+    }
+    .leaflet-popup-content { font-family: 'Segoe UI', sans-serif; font-size: 0.85rem; line-height: 1.5; }
+    .leaflet-popup-content strong { color: var(--azul-escuro); }
+    .icone-marcador { font-size: 20px; text-align: center; line-height: 24px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🗺️ Mapa de Acesso a Serviços</h1>
+    <nav class="menu">
+      <a href="index.html">Início</a>
+      <a href="modulo1.html">Radar de Oportunidades</a>
+      <a href="modulo2.html">Mapa de Acesso a Serviços</a>
+	  <a href="sobre.html">Sobre</a>
+    </nav>
+  </header>
+
+  <div class="aviso">
+    ⚠️ Agenda de capacitações é <strong>sintética</strong>. Localização dos
+    TEIAs é baseada em dados públicos da ADE SAMPA. A tabela abaixo mostra os dados usados.
+  </div>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <h2>🔍 Filtros</h2>
+      <label><input type="checkbox" id="filtro-teias" checked> Espaços TEIA</label>
+      <label><input type="checkbox" id="filtro-caps" checked> Capacitações</label>
+
+      <h2>📊 Distritos descobertos</h2>
+      <ol id="ranking-descobertos"></ol>
+
+      <h2>📋 Dados sintéticos (exemplo)</h2>
+      <div id="tabela-container"></div>
+
+      <button id="btn-exportar-m2">⬇️ Exportar CSV</button>
+    </aside>
+    <main id="mapa2"></main>
+  </div>
+
+  <footer>
+    Prova Técnica Prática — Edital nº 005/2026 — ADE SAMPA
+  </footer>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    // ═══════════════════════════════════════════════════════════
+    // DADOS EMBUTIDOS
+    // ═══════════════════════════════════════════════════════════
+    const DISTRITOS = [
+      { distrito: "Butantã",   lat: -23.5715, lon: -46.7208 },
+      { distrito: "Heliópolis",lat: -23.6198, lon: -46.5917 },
+      { distrito: "Grajaú",    lat: -23.7500, lon: -46.6800 },
+      { distrito: "Marsilac",  lat: -23.8500, lon: -46.7000 },
+      { distrito: "Pinheiros", lat: -23.5610, lon: -46.6922 },
+      { distrito: "Lapa",      lat: -23.5251, lon: -46.7043 },
+      { distrito: "Santo Amaro", lat: -23.6455, lon: -46.7052 },
+      { distrito: "São Miguel", lat: -23.4941, lon: -46.4421 },
+      { distrito: "Cidade Tiradentes", lat: -23.5833, lon: -46.3833 },
+      { distrito: "Parelheiros", lat: -23.8500, lon: -46.7000 }
+    ];
+
+    const TEIAS = [
+      { nome: "TEIA Butantã", endereco: "Rua Nella Murari Rosa, 40", lat: -23.5715, lon: -46.7208 },
+      { nome: "TEIA Heliópolis", endereco: "Estr. das Lágrimas, 2385", lat: -23.6198, lon: -46.5917 },
+      { nome: "TEIA Lapa", endereco: "R. Catão, 611", lat: -23.5251, lon: -46.7043 },
+      { nome: "TEIA Pinheiros", endereco: "Rua Sumidouro, 580", lat: -23.5610, lon: -46.6922 },
+      { nome: "TEIA Santo Amaro", endereco: "Av. João Dias, 2047", lat: -23.6455, lon: -46.7052 },
+      { nome: "TEIA São Miguel", endereco: "Rua Dona Ana Flora Pinheiro de Sousa, 76", lat: -23.4941, lon: -46.4421 },
+      { nome: "TEIA Cidade Tiradentes", endereco: "Rua Inácio Monteiro, 6900", lat: -23.5833, lon: -46.3833 },
+      { nome: "TEIA Parelheiros", endereco: "Estr. Ecoturística de Parelheiros, 1000", lat: -23.8500, lon: -46.7000 }
+    ];
+
+    const CAPACITACOES = [
+      { titulo: "Curso de Gestão Financeira", teia_referencia: "TEIA Lapa", data: "2026-10-15", local: "TEIA Lapa" },
+      { titulo: "Workshop de Marketing Digital", teia_referencia: "TEIA Butantã", data: "2026-10-18", local: "TEIA Butantã" },
+      { titulo: "Mentoria: Formalização MEI", teia_referencia: "TEIA Heliópolis", data: "2026-10-20", local: "TEIA Heliópolis" },
+      { titulo: "Curso de Emissão de NF-e", teia_referencia: "TEIA Pinheiros", data: "2026-10-22", local: "TEIA Pinheiros" },
+      { titulo: "Workshop de Precificação", teia_referencia: "TEIA Santo Amaro", data: "2026-10-25", local: "TEIA Santo Amaro" }
+    ];
+
+    // ═══════════════════════════════════════════════════════════
+    // LÓGICA DO MÓDULO 2
+    // ═══════════════════════════════════════════════════════════
+    const mapa2 = L.map('mapa2').setView([-23.60, -46.63], 10);
+    L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap France',
+      subdomains: 'abc',
+      maxZoom: 19
+    }).addTo(mapa2);
+
+    let marcadoresTeias = [];
+    let marcadoresCaps = [];
+    let marcadoresCobertura = [];
+
+    function haversine(lat1, lon1, lat2, lon2) {
+      const R = 6371;
+      const p1 = lat1 * Math.PI / 180, p2 = lat2 * Math.PI / 180;
+      const dp = (lat2 - lat1) * Math.PI / 180;
+      const dl = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dp/2)**2 + Math.cos(p1)*Math.cos(p2)*Math.sin(dl/2)**2;
+      return 2 * R * Math.asin(Math.sqrt(a));
+    }
+
+    function calcularCobertura(distrito) {
+      const d = DISTRITOS.find(x => x.distrito === distrito);
+      const distancias = TEIAS.map(t => ({
+        teia: t, dist: haversine(d.lat, d.lon, t.lat, t.lon)
+      }));
+      distancias.sort((a, b) => a.dist - b.dist);
+      const maisProximo = distancias[0];
+      const nCaps = CAPACITACOES.filter(c => c.teia_referencia === maisProximo.teia.nome).length;
+      const distNorm = 1 - Math.min(maisProximo.dist / 10, 1);
+      const capNorm = Math.min(nCaps / 5, 1);
+      const cobertura = 0.7 * distNorm + 0.3 * capNorm;
+      return {
+        distrito,
+        lat: d.lat,
+        lon: d.lon,
+        distancia_teia_km: maisProximo.dist.toFixed(2),
+        teia_mais_proximo: maisProximo.teia.nome,
+        n_capacitacoes: nCaps,
+        cobertura: parseFloat(cobertura.toFixed(3))
+      };
+    }
+
+    function corPorCobertura(c) {
+      if (c >= 0.75) return '#1a9850';
+      if (c >= 0.5)  return '#a6d96a';
+      if (c >= 0.3)  return '#fee08b';
+      if (c >= 0.15) return '#f46d43';
+      return '#d73027';
+    }
+
+    function carregarModulo2() {
+      const cobertura = DISTRITOS.map(d => calcularCobertura(d.distrito));
+
+      cobertura.forEach(d => {
+        const marcador = L.circleMarker([d.lat, d.lon], {
+          radius: 12,
+          fillColor: corPorCobertura(d.cobertura),
+          color: '#ffffff',
+          weight: 2,
+          opacity: 1,
+          fillOpacity: 0.85,
+        }).bindPopup(`
+          <strong>${d.distrito}</strong><br>
+          <b>Índice de Cobertura:</b> ${(d.cobertura * 100).toFixed(0)}%<br>
+          TEIA mais próximo: ${d.teia_mais_proximo}<br>
+          Distância: ${d.distancia_teia_km} km<br>
+          Capacitações: ${d.n_capacitacoes}
+        `);
+        marcador.addTo(mapa2);
+        marcadoresCobertura.push(marcador);
+      });
+
+      TEIAS.forEach(t => {
+        const m = L.marker([t.lat, t.lon], {
+          icon: L.divIcon({
+            className: 'icone-marcador',
+            html: '🏢',
+            iconSize: [24, 24],
+            iconAnchor: [12, 12]
+          })
+        }).bindPopup(`<strong>${t.nome}</strong><br>${t.endereco}`);
+        marcadoresTeias.push(m);
+        m.addTo(mapa2);
+      });
+
+      CAPACITACOES.forEach(c => {
+        const teia = TEIAS.find(t => t.nome === c.teia_referencia);
+        if (!teia) return;
+        const m = L.marker([teia.lat, teia.lon], {
+          icon: L.divIcon({
+            className: 'icone-marcador',
+            html: '📚',
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
+          })
+        }).bindPopup(`<strong>${c.titulo}</strong><br>${c.data} — ${c.local}`);
+        marcadoresCaps.push(m);
+        m.addTo(mapa2);
+      });
+
+      const descobertos = [...cobertura].sort((a, b) => a.cobertura - b.cobertura).slice(0, 10);
+      document.getElementById('ranking-descobertos').innerHTML = descobertos.map(d =>
+        `<li><strong>${d.distrito}</strong> — cobertura ${(d.cobertura * 100).toFixed(0)}%</li>`
+      ).join('');
+
+      const tabela = `
+        <table class="tabela-dados">
+          <thead>
+            <tr>
+              <th title="Nome do distrito">Distrito</th>
+              <th title="Distância até o TEIA mais próximo (km)">Dist.</th>
+              <th title="Espaço TEIA mais próximo">TEIA</th>
+              <th title="Número de capacitações no TEIA mais próximo">Caps.</th>
+              <th title="Índice de Cobertura (0 a 1)">Cob.</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${cobertura.sort((a,b) => a.cobertura - b.cobertura).map(d => `
+              <tr>
+                <td>${d.distrito}</td>
+                <td>${d.distancia_teia_km} km</td>
+                <td>${d.teia_mais_proximo.replace('TEIA ', '')}</td>
+                <td>${d.n_capacitacoes}</td>
+                <td><strong>${(d.cobertura * 100).toFixed(0)}%</strong></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        <div class="legenda-tabela">
+          <b>Legenda da tabela:</b><br>
+          • <b>Dist.</b> = distância até o TEIA mais próximo (km)<br>
+          • <b>TEIA</b> = nome do espaço TEIA mais próximo<br>
+          • <b>Caps.</b> = nº de capacitações no TEIA mais próximo<br>
+          • <b>Cob.</b> = Índice de Cobertura (0 a 100%; quanto maior, melhor)
+        </div>
+      `;
+      document.getElementById('tabela-container').innerHTML = tabela;
+    }
+
+    const legenda = L.control({ position: 'bottomright' });
+    legenda.onAdd = function() {
+      const div = L.DomUtil.create('div', 'legenda');
+      div.innerHTML = `
+        <strong>Índice de Cobertura</strong>
+        <div class="legenda-item"><span class="legenda-cor" style="background:#1a9850"></span> Alta (≥ 75%)</div>
+        <div class="legenda-item"><span class="legenda-cor" style="background:#a6d96a"></span> Média-alta (50–75%)</div>
+        <div class="legenda-item"><span class="legenda-cor" style="background:#fee08b"></span> Média (30–50%)</div>
+        <div class="legenda-item"><span class="legenda-cor" style="background:#f46d43"></span> Baixa (15–30%)</div>
+        <div class="legenda-item"><span class="legenda-cor" style="background:#d73027"></span> Muito baixa (&lt; 15%)</div>
+        <div style="margin-top:6px;font-size:0.7rem;color:#64748b">🏢 TEIA &nbsp; 📚 Capacitação</div>
+      `;
+      return div;
+    };
+    legenda.addTo(mapa2);
+
+    document.getElementById('filtro-teias').addEventListener('change', e => {
+      marcadoresTeias.forEach(m => e.target.checked ? m.addTo(mapa2) : mapa2.removeLayer(m));
+    });
+    document.getElementById('filtro-caps').addEventListener('change', e => {
+      marcadoresCaps.forEach(m => e.target.checked ? m.addTo(mapa2) : mapa2.removeLayer(m));
+    });
+    document.getElementById('btn-exportar-m2').addEventListener('click', () => {
+      const cobertura = DISTRITOS.map(d => calcularCobertura(d.distrito));
+      const csv = 'distrito,distancia_teia_km,teia_mais_proximo,n_capacitacoes,cobertura\n' +
+        cobertura.map(d => `${d.distrito},${d.distancia_teia_km},${d.teia_mais_proximo},${d.n_capacitacoes},${d.cobertura}`).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'cobertura_teias.csv';
+      a.click();
+    });
+
+    carregarModulo2();
+  </script>
+</body>
+</html>

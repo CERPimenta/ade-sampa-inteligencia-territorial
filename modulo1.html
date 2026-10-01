@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Radar de Oportunidades — ADE SAMPA</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --azul-escuro: #0f2c5c;
+      --azul: #1e4fa3;
+      --azul-claro: #3b82f6;
+      --cinza-fundo: #f1f5f9;
+      --cinza-borda: #e2e8f0;
+      --texto: #1e293b;
+      --texto-suave: #64748b;
+      --amarelo: #fef3c7;
+      --amarelo-texto: #92400e;
+      --verde: #1a9850;
+      --vermelho: #d73027;
+    }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+      background: var(--cinza-fundo); color: var(--texto);
+      height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+    }
+    header {
+      background: linear-gradient(135deg, var(--azul-escuro) 0%, var(--azul) 60%, var(--azul-claro) 100%);
+      color: white; padding: 16px 32px;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 12px;
+      box-shadow: 0 4px 12px rgba(15, 44, 92, 0.15);
+      z-index: 1000;
+    }
+    header h1 { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.3px; }
+    .menu { display: flex; gap: 6px; flex-wrap: wrap; }
+    .menu a {
+      color: white; text-decoration: none; font-size: 0.82rem;
+      padding: 6px 12px; border-radius: 6px;
+      background: rgba(255, 255, 255, 0.1); transition: background 0.2s;
+    }
+    .menu a:hover { background: rgba(255, 255, 255, 0.25); }
+    .aviso {
+      background: var(--amarelo); color: var(--amarelo-texto);
+      padding: 8px 32px; font-size: 0.8rem; border-bottom: 1px solid #fde68a;
+    }
+    .layout { display: flex; flex: 1; overflow: hidden; }
+    .sidebar {
+      width: 440px; background: white; padding: 24px;
+      overflow-y: auto; border-right: 1px solid var(--cinza-borda);
+      box-shadow: 2px 0 8px rgba(15, 44, 92, 0.04);
+    }
+    .sidebar h2 {
+      font-size: 0.95rem; color: var(--azul-escuro);
+      margin: 20px 0 10px; font-weight: 700;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .sidebar h2:first-child { margin-top: 0; }
+    .sidebar label { font-size: 0.85rem; color: var(--texto-suave); display: block; margin-bottom: 6px; }
+    .sidebar select {
+      width: 100%; padding: 10px 12px;
+      border: 1px solid var(--cinza-borda); border-radius: 8px;
+      font-size: 0.88rem; color: var(--texto);
+      background: white; cursor: pointer; transition: border-color 0.2s;
+    }
+    .sidebar select:focus { outline: none; border-color: var(--azul-claro); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+    #ranking { list-style: none; counter-reset: rank; }
+    #ranking li {
+      counter-increment: rank;
+      padding: 10px 12px; margin-bottom: 6px;
+      background: var(--cinza-fundo); border-radius: 8px;
+      font-size: 0.85rem; display: flex; align-items: center; gap: 10px;
+      border-left: 3px solid var(--azul-claro); transition: background 0.2s;
+    }
+    #ranking li:hover { background: #e2e8f0; }
+    #ranking li::before {
+      content: counter(rank); font-weight: 700; color: var(--azul);
+      font-size: 0.8rem; min-width: 20px; text-align: center;
+      background: white; border-radius: 50%; width: 24px; height: 24px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    #ranking li strong { color: var(--azul-escuro); flex: 1; }
+    button {
+      width: 100%; margin-top: 16px; padding: 12px;
+      background: linear-gradient(135deg, var(--azul), var(--azul-claro));
+      color: white; border: none; border-radius: 8px; cursor: pointer;
+      font-size: 0.88rem; font-weight: 600;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    button:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(30, 79, 163, 0.3); }
+    #mapa { flex: 1; }
+
+    /* Caixa de explicação */
+    .explicacao {
+      background: #eff6ff;
+      border-left: 3px solid var(--azul-claro);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 0.78rem;
+      line-height: 1.6;
+      color: var(--texto);
+      margin-bottom: 12px;
+    }
+    .explicacao strong { color: var(--azul-escuro); }
+    .explicacao .formula {
+      background: white;
+      padding: 6px 8px;
+      border-radius: 6px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.72rem;
+      margin-top: 6px;
+      display: block;
+      color: var(--azul-escuro);
+    }
+
+    /* Tabela de dados sintéticos */
+    .tabela-dados {
+      margin-top: 8px;
+      font-size: 0.72rem;
+      border-collapse: collapse;
+      width: 100%;
+    }
+    .tabela-dados th, .tabela-dados td {
+      padding: 6px 6px;
+      text-align: left;
+      border-bottom: 1px solid var(--cinza-borda);
+    }
+    .tabela-dados th {
+      background: var(--azul-escuro);
+      color: white;
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+      font-size: 0.68rem;
+      cursor: help;
+    }
+    .tabela-dados tr:nth-child(even) { background: var(--cinza-fundo); }
+    .tabela-dados tr:hover { background: #e2e8f0; }
+
+    /* Legenda da tabela */
+    .legenda-tabela {
+      font-size: 0.7rem;
+      color: var(--texto-suave);
+      margin-top: 8px;
+      padding: 8px 10px;
+      background: var(--cinza-fundo);
+      border-radius: 6px;
+      line-height: 1.7;
+    }
+    .legenda-tabela b { color: var(--azul-escuro); }
+
+    /* Legenda do mapa */
+    .legenda {
+      background: white;
+      padding: 10px 14px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      font-size: 0.8rem;
+      line-height: 1.8;
+    }
+    .legenda strong { display: block; margin-bottom: 6px; color: var(--azul-escuro); }
+    .legenda-item { display: flex; align-items: center; gap: 8px; }
+    .legenda-cor {
+      width: 16px; height: 16px; border-radius: 50%;
+      border: 2px solid white;
+      box-shadow: 0 0 2px rgba(0,0,0,0.3);
+    }
+
+    footer {
+      background: var(--azul-escuro); color: rgba(255, 255, 255, 0.7);
+      text-align: center; padding: 10px; font-size: 0.75rem;
+    }
+    .leaflet-popup-content { font-family: 'Segoe UI', sans-serif; font-size: 0.85rem; line-height: 1.5; }
+    .leaflet-popup-content strong { color: var(--azul-escuro); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>📡 Radar de Oportunidades para MEIs</h1>
+    <nav class="menu">
+      <a href="index.html">Início</a>
+      <a href="modulo1.html">Radar de Oportunidades</a>
+      <a href="modulo2.html">Mapa de Acesso a Serviços</a>
+	  <a href="sobre.html">Sobre</a>
+    </nav>
+  </header>
+
+  <div class="aviso">
+    ⚠️ Distribuição de MEIs por CNAE é <strong>sintética</strong>, calibrada
+    pelos totais reais por distrito. A tabela abaixo mostra os dados usados no cálculo.
+  </div>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <h2>🔍 Filtro</h2>
+      <label for="select-cnae">Tipo de atividade (CNAE):</label>
+      <select id="select-cnae"></select>
+
+
+      <h2>🏆 Top 10 distritos</h2>
+      <ol id="ranking"></ol>
+
+      <h2>📋 Dados sintéticos (exemplo)</h2>
+      <div id="tabela-container"></div>
+
+      <button id="btn-exportar">⬇️ Exportar CSV</button>
+    </aside>
+    <main id="mapa"></main>
+  </div>
+
+  <footer>
+    Prova Técnica Prática — Edital nº 005/2026 — ADE SAMPA
+  </footer>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    // ═══════════════════════════════════════════════════════════
+    // DADOS EMBUTIDOS
+    // ═══════════════════════════════════════════════════════════
+    const DISTRITOS = [
+      { distrito: "Butantã",   populacao: 54000,  renda_media: 3200, total_meis: 4200, lat: -23.5715, lon: -46.7208, tem_teia: 1 },
+      { distrito: "Heliópolis",populacao: 45000,  renda_media: 1100, total_meis: 2800, lat: -23.6198, lon: -46.5917, tem_teia: 1 },
+      { distrito: "Grajaú",    populacao: 380000, renda_media: 1200, total_meis: 10500, lat: -23.7500, lon: -46.6800, tem_teia: 0 },
+      { distrito: "Marsilac",  populacao: 9000,   renda_media: 900,  total_meis: 320,  lat: -23.8500, lon: -46.7000, tem_teia: 0 },
+      { distrito: "Pinheiros", populacao: 65000,  renda_media: 5500, total_meis: 6800, lat: -23.5610, lon: -46.6922, tem_teia: 1 },
+      { distrito: "Lapa",      populacao: 60000,  renda_media: 3800, total_meis: 5200, lat: -23.5251, lon: -46.7043, tem_teia: 1 },
+      { distrito: "Santo Amaro", populacao: 70000, renda_media: 3000, total_meis: 6100, lat: -23.6455, lon: -46.7052, tem_teia: 1 },
+      { distrito: "São Miguel", populacao: 90000, renda_media: 1600, total_meis: 7200, lat: -23.4941, lon: -46.4421, tem_teia: 1 },
+      { distrito: "Cidade Tiradentes", populacao: 220000, renda_media: 1100, total_meis: 5800, lat: -23.5833, lon: -46.3833, tem_teia: 1 },
+      { distrito: "Parelheiros", populacao: 150000, renda_media: 1000, total_meis: 3400, lat: -23.8500, lon: -46.7000, tem_teia: 1 }
+    ];
+
+    const CNAES = {
+      "Cabeleireiros e estética": 0.12,
+      "Comércio de vestuário": 0.10,
+      "Alimentação e bebidas": 0.15,
+      "Construção e reformas": 0.09,
+      "Serviços de informática": 0.06,
+      "Artesanato e decoração": 0.05,
+      "Transporte e entregas": 0.08,
+      "Educação e treinamento": 0.04,
+      "Saúde e bem-estar": 0.07,
+      "Comércio varejista diverso": 0.14,
+      "Outros serviços": 0.10
+    };
+
+    function gerarMeisSinteticos() {
+      const registros = [];
+      DISTRITOS.forEach(d => {
+        Object.entries(CNAES).forEach(([cnae, prop]) => {
+          const u1 = Math.random(), u2 = Math.random();
+          const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+          const fator = Math.min(1.5, Math.max(0.5, 1 + z * 0.15));
+          const qtd = Math.max(1, Math.round(d.total_meis * prop * fator));
+          registros.push({ distrito: d.distrito, cnae, concorrentes: qtd });
+        });
+      });
+      return registros;
+    }
+    const MEIS = gerarMeisSinteticos();
+
+    // ═══════════════════════════════════════════════════════════
+    // LÓGICA DO MÓDULO 1
+    // ═══════════════════════════════════════════════════════════
+    const mapa = L.map('mapa').setView([-23.60, -46.63], 10);
+    L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap France',
+      subdomains: 'abc',
+      maxZoom: 19
+    }).addTo(mapa);
+
+    let marcadores = [];
+
+    function corPorIO(io) {
+      if (io >= 0.75) return '#1a9850';
+      if (io >= 0.5)  return '#a6d96a';
+      if (io >= 0.3)  return '#fee08b';
+      if (io >= 0.15) return '#f46d43';
+      return '#d73027';
+    }
+
+    function calcularIO(cnae) {
+      const base = MEIS.filter(m => m.cnae === cnae).map(m => {
+        const d = DISTRITOS.find(x => x.distrito === m.distrito);
+        return { ...m, ...d };
+      });
+      const rendaMax = Math.max(...base.map(b => b.renda_media));
+      base.forEach(b => {
+        b.renda_norm = b.renda_media / rendaMax;
+        b.fator_teia = b.tem_teia === 1 ? 1.0 : 0.8;
+        b.io = (b.populacao / b.concorrentes) * b.renda_norm * b.fator_teia;
+      });
+      const ioMax = Math.max(...base.map(b => b.io));
+      base.forEach(b => b.io = b.io / ioMax);
+      return base;
+    }
+
+    function carregarCnaes() {
+      const sel = document.getElementById('select-cnae');
+      Object.keys(CNAES).forEach(c => sel.innerHTML += `<option>${c}</option>`);
+      sel.addEventListener('change', () => atualizar(sel.value));
+      atualizar(Object.keys(CNAES)[0]);
+    }
+
+    function atualizar(cnae) {
+      const dados = calcularIO(cnae);
+
+      marcadores.forEach(m => mapa.removeLayer(m));
+      marcadores = [];
+
+      dados.forEach(d => {
+        const raio = 8 + Math.min(d.populacao / 40000, 1) * 12;
+        const marcador = L.circleMarker([d.lat, d.lon], {
+          radius: raio,
+          fillColor: corPorIO(d.io),
+          color: '#ffffff',
+          weight: 2,
+          opacity: 1,
+          fillOpacity: 0.85,
+        }).bindPopup(`
+          <strong>${d.distrito}</strong><br>
+          <b>Índice de Oportunidade (IO):</b> ${d.io.toFixed(2)}<br>
+          População: ${d.populacao.toLocaleString()}<br>
+          Concorrentes: ${d.concorrentes}<br>
+          Renda média: R$ ${d.renda_media}<br>
+          ${d.tem_teia === 1 ? '🏢 Possui TEIA' : '⚠️ Sem TEIA'}
+        `);
+        marcador.addTo(mapa);
+        marcadores.push(marcador);
+      });
+
+      const top10 = [...dados].sort((a, b) => b.io - a.io).slice(0, 10);
+      document.getElementById('ranking').innerHTML = top10.map(d =>
+        `<li><strong>${d.distrito}</strong> — IO ${d.io.toFixed(2)}</li>`
+      ).join('');
+
+      const tabela = `
+        <table class="tabela-dados">
+          <thead>
+            <tr>
+              <th title="Nome do distrito">Distrito</th>
+              <th title="Número de MEIs do mesmo CNAE no distrito (concorrência)">Concorr.</th>
+              <th title="População total do distrito">Pop.</th>
+              <th title="Renda média mensal (R$)">Renda</th>
+              <th title="Índice de Oportunidade (0 a 1)">IO</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${dados.sort((a,b) => b.io - a.io).map(d => `
+              <tr>
+                <td>${d.distrito}</td>
+                <td>${d.concorrentes}</td>
+                <td>${d.populacao.toLocaleString()}</td>
+                <td>R$ ${d.renda_media}</td>
+                <td><strong>${d.io.toFixed(3)}</strong></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        <div class="legenda-tabela">
+          <b>Legenda da tabela:</b><br>
+          • <b>Concorr.</b> = MEIs do mesmo CNAE no distrito (concorrência)<br>
+          • <b>Pop.</b> = população total do distrito<br>
+          • <b>Renda</b> = renda média mensal (R$)<br>
+          • <b>IO</b> = Índice de Oportunidade (0 a 1; quanto maior, melhor)
+        </div>
+      `;
+      document.getElementById('tabela-container').innerHTML = tabela;
+    }
+
+    const legenda = L.control({ position: 'bottomright' });
+    legenda.onAdd = function() {
+      const div = L.DomUtil.create('div', 'legenda');
+      div.innerHTML = `
+        <strong>Índice de Oportunidade (IO)</strong>
+        <div class="legenda-item"><span class="legenda-cor" style="background:#1a9850"></span> Alto (≥ 0,75)</div>
+        <div class="legenda-item"><span class="legenda-cor" style="background:#a6d96a"></span> Médio-alto (0,50–0,75)</div>
+        <div class="legenda-item"><span class="legenda-cor" style="background:#fee08b"></span> Médio (0,30–0,50)</div>
+        <div class="legenda-item"><span class="legenda-cor" style="background:#f46d43"></span> Baixo (0,15–0,30)</div>
+        <div class="legenda-item"><span class="legenda-cor" style="background:#d73027"></span> Muito baixo (&lt; 0,15)</div>
+        <div style="margin-top:6px;font-size:0.7rem;color:#64748b">Tamanho do círculo = população</div>
+      `;
+      return div;
+    };
+    legenda.addTo(mapa);
+
+    document.getElementById('btn-exportar').addEventListener('click', () => {
+      const cnae = document.getElementById('select-cnae').value;
+      const dados = calcularIO(cnae);
+      const csv = 'distrito,cnae,concorrentes,populacao,renda_media,io\n' +
+        dados.map(d => `${d.distrito},${d.cnae},${d.concorrentes},${d.populacao},${d.renda_media},${d.io.toFixed(4)}`).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `radar_${cnae}.csv`;
+      a.click();
+    });
+
+    carregarCnaes();
+  </script>
+</body>
+</html>

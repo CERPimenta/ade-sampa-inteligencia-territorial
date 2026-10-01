@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Documentação — ADE SAMPA Inteligência Territorial</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --azul-escuro: #0f2c5c;
+      --azul: #1e4fa3;
+      --azul-claro: #3b82f6;
+      --cinza-fundo: #f1f5f9;
+      --cinza-borda: #e2e8f0;
+      --texto: #1e293b;
+      --texto-suave: #64748b;
+      --amarelo: #fef3c7;
+      --amarelo-texto: #92400e;
+      --verde: #1a9850;
+      --vermelho: #d73027;
+    }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+      background: var(--cinza-fundo);
+      color: var(--texto);
+      line-height: 1.7;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: linear-gradient(135deg, var(--azul-escuro) 0%, var(--azul) 60%, var(--azul-claro) 100%);
+      color: white;
+      padding: 24px 40px;
+      box-shadow: 0 4px 12px rgba(15, 44, 92, 0.15);
+    }
+    header h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 12px; }
+    .menu { display: flex; gap: 8px; flex-wrap: wrap; }
+    .menu a {
+      color: white; text-decoration: none; font-size: 0.88rem;
+      padding: 8px 16px; border-radius: 8px;
+      background: rgba(255, 255, 255, 0.1); transition: background 0.2s;
+    }
+    .menu a:hover { background: rgba(255, 255, 255, 0.25); }
+    .menu a.ativo { background: rgba(255, 255, 255, 0.3); font-weight: 600; }
+
+    .conteudo {
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 0 32px;
+      flex: 1;
+      width: 100%;
+    }
+
+    .intro {
+      background: white;
+      padding: 24px 28px;
+      border-radius: 12px;
+      border-left: 4px solid var(--azul-claro);
+      box-shadow: 0 2px 8px rgba(15, 44, 92, 0.06);
+      margin-bottom: 28px;
+    }
+    .intro p { color: var(--texto-suave); font-size: 0.95rem; }
+
+    /* Índice de navegação */
+    .indice {
+      background: white;
+      padding: 20px 28px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(15, 44, 92, 0.06);
+      margin-bottom: 28px;
+    }
+    .indice h3 { font-size: 0.95rem; color: var(--azul-escuro); margin-bottom: 12px; }
+    .indice ul { list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 16px; }
+    .indice li { font-size: 0.88rem; }
+    .indice a {
+      color: var(--azul);
+      text-decoration: none;
+      padding: 4px 0;
+      display: block;
+      border-bottom: 1px dashed transparent;
+      transition: border-color 0.2s;
+    }
+    .indice a:hover { border-bottom-color: var(--azul-claro); }
+
+    .secao {
+      background: white;
+      padding: 28px 32px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(15, 44, 92, 0.06);
+      margin-bottom: 24px;
+      border-top: 4px solid var(--azul);
+      scroll-margin-top: 20px;
+    }
+    .secao h2 {
+      font-size: 1.25rem;
+      color: var(--azul-escuro);
+      margin-bottom: 16px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .secao h3 {
+      font-size: 1rem;
+      color: var(--azul);
+      margin: 20px 0 10px;
+      font-weight: 700;
+    }
+    .secao p { color: var(--texto); font-size: 0.95rem; margin-bottom: 12px; }
+
+    .formula {
+      background: var(--cinza-fundo);
+      border-left: 3px solid var(--azul-claro);
+      padding: 14px 18px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.95rem;
+      color: var(--azul-escuro);
+      margin: 12px 0;
+      overflow-x: auto;
+    }
+
+    .fatores { list-style: none; margin: 12px 0; }
+    .fatores li {
+      padding: 10px 14px;
+      margin-bottom: 6px;
+      background: var(--cinza-fundo);
+      border-radius: 8px;
+      font-size: 0.9rem;
+      border-left: 3px solid var(--azul-claro);
+    }
+    .fatores li b { color: var(--azul-escuro); }
+
+    .tabela-explicativa {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 0.88rem;
+    }
+    .tabela-explicativa th, .tabela-explicativa td {
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--cinza-borda);
+    }
+    .tabela-explicativa th {
+      background: var(--azul-escuro);
+      color: white;
+      font-weight: 600;
+    }
+    .tabela-explicativa tr:nth-child(even) { background: var(--cinza-fundo); }
+
+    .escala-cores {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 16px 0;
+    }
+    .escala-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: var(--cinza-fundo);
+      border-radius: 8px;
+      font-size: 0.82rem;
+    }
+    .escala-cor {
+      width: 18px; height: 18px; border-radius: 50%;
+      border: 2px solid white;
+      box-shadow: 0 0 2px rgba(0,0,0,0.3);
+    }
+
+    .aviso {
+      background: var(--amarelo);
+      color: var(--amarelo-texto);
+      padding: 14px 18px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      border-left: 4px solid #f59e0b;
+      margin: 16px 0;
+    }
+    .aviso b { color: var(--amarelo-texto); }
+
+    .badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .badge-real { background: #dcfce7; color: #166534; }
+    .badge-sintetico { background: #fee2e2; color: #991b1b; }
+
+    footer {
+      background: var(--azul-escuro);
+      color: rgba(255, 255, 255, 0.7);
+      text-align: center;
+      padding: 16px;
+      font-size: 0.8rem;
+      margin-top: auto;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>📚 Documentação — ADE SAMPA Inteligência Territorial</h1>
+    <nav class="menu">
+      <a href="index.html">Início</a>
+      <a href="modulo1.html">📡 Radar de Oportunidades</a>
+      <a href="modulo2.html">🗺️ Mapa de Acesso a Serviços</a>
+      <a href="documentacao.html" class="ativo">📚 Documentação</a>
+    </nav>
+  </header>
+
+  <main class="conteudo">
+
+    <div class="intro">
+      <p>
+        Esta página reúne a documentação do projeto <b>ADE SAMPA — Inteligência
+        Territorial</b>: contexto institucional, o que é o MEI, os espaços TEIA,
+        as fontes de dados utilizadas, a metodologia adotada, o uso de
+        inteligência artificial, as limitações e as possíveis evoluções da
+        solução.
+      </p>
+    </div>
+
+    <!-- Índice -->
+    <div class="indice">
+      <h3>📑 Índice</h3>
+      <ul>
+        <li><a href="#adesampa">1. Sobre a ADE SAMPA</a></li>
+        <li><a href="#mei">2. O MEI na cidade de São Paulo</a></li>
+        <li><a href="#teia">3. Os espaços TEIA</a></li>
+        <li><a href="#observatorio">4. O Observatório MEI</a></li>
+        <li><a href="#fontes">5. Fontes de dados utilizadas</a></li>
+        <li><a href="#metodologia">6. Metodologia e justificativas</a></li>
+        <li><a href="#ia">7. Uso de Inteligência Artificial</a></li>
+        <li><a href="#limitacoes">8. Limitações e melhorias</a></li>
+      </ul>
+    </div>
+
+    <!-- 1. ADE SAMPA -->
+    <section class="secao" id="adesampa">
+      <h2>1. 🏛️ Sobre a ADE SAMPA</h2>
+      <p>
+        A <b>ADE SAMPA (Agência São Paulo de Desenvolvimento)</b> é um
+        <b>Serviço Social Autônomo</b>, criado pela <b>Lei Municipal nº
+        15.838/2013</b>, vinculado à <b>Secretaria Municipal de Desenvolvimento
+        Econômico e Trabalho (SMDET)</b>. Trata-se de uma entidade de direito
+        privado, sem fins lucrativos, de interesse coletivo e utilidade pública.
+      </p>
+
+      <h3>Objetivos institucionais</h3>
+      <ul class="fatores">
+        <li>Promover a <b>cultura empreendedora</b> e o surgimento de novos negócios, com atenção especial à população em situação de vulnerabilidade.</li>
+        <li>Fortalecer empresas existentes, estimulando sua competitividade.</li>
+        <li>Oferecer <b>espaços de coworking públicos</b> nas periferias, com infraestrutura completa e atividades de capacitação.</li>
+        <li>Facilitar o <b>acesso ao microcrédito</b> para pequenos empreendedores de baixa renda.</li>
+        <li>Estimular <b>cadeias produtivas</b> locais, ampliando oportunidades de produção, transformação e distribuição.</li>
+      </ul>
+
+      <h3>Serviços oferecidos</h3>
+      <p>
+        A ADE SAMPA atua em todas as etapas da jornada do empreendedor:
+        orientação para <b>formalização como MEI</b>, apoio na construção do
+        plano de negócios, orientação para acesso a crédito, cursos gratuitos
+        de capacitação e uso dos espaços TEIA.
+      </p>
+    </section>
+
+    <!-- 2. MEI -->
+    <section class="secao" id="mei">
+      <h2>2. 👤 O MEI na cidade de São Paulo</h2>
+      <p>
+        O <b>Microempreendedor Individual (MEI)</b> é a figura jurídica criada
+        para formalizar trabalhadores autônomos. Conforme a <b>Resolução CGSN
+        nº 140/2018</b>, o MEI é o empresário individual que:
+      </p>
+      <ul class="fatores">
+        <li>Opta pelo regime tributário <b>Simples Nacional</b>.</li>
+        <li>Tem faturamento anual de até <b>R$ 81.000,00</b>.</li>
+        <li>Exerce uma das ocupações permitidas na legislação.</li>
+        <li><b>Não possui sócios</b> e não participa de outra empresa como titular, sócio ou administrador.</li>
+        <li>Pode ter no máximo <b>1 empregado</b> contratado.</li>
+      </ul>
+
+      <p>
+        O MEI recolhe mensalmente o <b>DAS-MEI</b> (Documento de Arrecadação do
+        Simples Nacional), com vencimento no dia 20 de cada mês. A ADE SAMPA é
+        a <b>porta de entrada</b> para a formalização e orientação do MEI no
+        município de São Paulo, oferecendo atendimento presencial nos espaços
+        TEIA e nos postos de atendimento.
+      </p>
+    </section>
+
+    <!-- 3. TEIA -->
+    <section class="secao" id="teia">
+      <h2>3. 🏢 Os espaços TEIA</h2>
+      <p>
+        Os <b>TEIAs</b> são <b>coworkings públicos gratuitos</b> operados pela
+        ADE SAMPA, localizados prioritariamente em regiões periféricas da
+        cidade. Eles oferecem estações de trabalho, computadores, internet,
+        salas de reunião e uma programação mensal de capacitações e eventos de
+        networking.
+      </p>
+
+      <h3>Requisitos operacionais</h3>
+      <ul class="fatores">
+        <li>Cada unidade deve contar com <b>1 gestor comunitário</b>, <b>1 assistente</b> e <b>1 estagiário</b>.</li>
+        <li>Funcionamento mínimo de <b>45 horas semanais</b>.</li>
+        <li>Mínimo de <b>8 horas mensais</b> de capacitação (4 a 8 atividades presenciais).</li>
+        <li>Pelo menos <b>1 evento de networking de 2 horas</b> por mês.</li>
+      </ul>
+
+      <h3>Uso em 2023</h3>
+      <ul class="fatores">
+        <li><b>21.294</b> acessos aos espaços.</li>
+        <li><b>2.547</b> participantes em feiras e eventos de networking.</li>
+        <li><b>5.924</b> participantes em cursos, palestras e oficinas.</li>
+        <li><b>Total: 29.765 atendimentos</b> no ano.</li>
+      </ul>
+
+      <div class="aviso">
+        <b>Nota:</b> a localização dos TEIAs utilizada nesta aplicação é
+        baseada em dados públicos do site institucional da ADE SAMPA.
+      </div>
+    </section>
+
+    <!-- 4. Observatório MEI -->
+    <section class="secao" id="observatorio">
+      <h2>4. 📊 O Observatório MEI</h2>
+      <p>
+        O <b>Observatório MEI</b> é um <b>dashboard interativo</b> desenvolvido
+        pela Gerência de Relacionamento com o Empreendedor da ADE SAMPA. Ele
+        reúne dados quantitativos sobre os microempreendedores individuais e
+        serve de base para o planejamento de novas ações e políticas públicas.
+      </p>
+
+      <h3>O que o Observatório apresenta</h3>
+      <ul class="fatores">
+        <li>Distribuição dos MEIs no Brasil, no estado e no município de São Paulo.</li>
+        <li>Distribuição dos MEIs na cidade por <b>região, subprefeitura e distrito</b>.</li>
+        <li>Atividades exercidas pelos MEIs, por <b>CNAE</b>, setor econômico e recorte territorial.</li>
+        <li>Taxa média de <b>inadimplência</b> dos MEIs.</li>
+      </ul>
+
+      <h3>Fontes de dados do Observatório</h3>
+      <ul class="fatores">
+        <li><b>CCM</b> (Cadastro de Contribuintes Mobiliários), mantido pela SMDET.</li>
+        <li><b>Portal Simples Nacional</b>.</li>
+        <li><b>Portal do Empreendedor</b>.</li>
+      </ul>
+
+      <p>
+        O Observatório <b>respeita a LGPD</b> e não divulga dados pessoais,
+        trabalhando apenas com informações agregadas.
+      </p>
+    </section>
+
+    <!-- 5. Fontes de dados -->
+    <section class="secao" id="fontes">
+      <h2>5. 🗂️ Fontes de dados utilizadas</h2>
+
+      <h3>Dados reais <span class="badge badge-real">reais</span></h3>
+      <table class="tabela-explicativa">
+        <thead>
+          <tr><th>Fonte</th><th>Dado utilizado</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Censo 2022 (IBGE)</td><td>População por distrito</td></tr>
+          <tr><td>Mapa da Desigualdade 2024</td><td>Renda média por distrito</td></tr>
+          <tr><td>Observatório MEI (ADE SAMPA)</td><td>Total de MEIs por distrito</td></tr>
+          <tr><td>GeoSampa</td><td>Malha geoespacial dos distritos</td></tr>
+          <tr><td>Site institucional da ADE SAMPA</td><td>Localização dos espaços TEIA</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Dados sintéticos <span class="badge badge-sintetico">sintéticos</span></h3>
+      <ul class="fatores">
+        <li>
+          <b>Distribuição de MEIs por CNAE e distrito:</b> a base granular por
+          atividade e distrito não é pública. A premissa adotada é que a
+          distribuição de atividades dentro de cada distrito segue a média da
+          cidade, com <b>ruído gaussiano de 15%</b> (clipado entre 0,5 e 1,5).
+          A calibração é feita pelos totais reais de MEIs por distrito.
+        </li>
+        <li>
+          <b>Agenda de capacitações:</b> dados fictícios, criados apenas para
+          demonstrar a funcionalidade de cobertura do Módulo 2.
+        </li>
+      </ul>
+
+      <div class="aviso">
+        <b>Importante:</b> os dados sintéticos estão claramente identificados
+        no topo de cada módulo e nesta página. Em produção, seriam substituídos
+        pelos dados reais do Observatório MEI e pela agenda oficial da ADE SAMPA.
+      </div>
+    </section>
+
+    <!-- 6. Metodologia -->
+    <section class="secao" id="metodologia">
+      <h2>6. 🔬 Metodologia e justificativas</h2>
+
+      <h3>Por que dois módulos?</h3>
+      <p>
+        O <b>Módulo 1 (Radar de Oportunidades)</b> apoia a decisão locacional do
+        empreendedor, indicando onde há melhor equilíbrio entre demanda e
+        concorrência. O <b>Módulo 2 (Mapa de Acesso a Serviços)</b> avalia a
+        cobertura territorial dos serviços da ADE SAMPA, identificando distritos
+        descobertos. Juntos, cobrem as duas pontas do problema: onde empreender
+        e onde ampliar o atendimento público.
+      </p>
+
+      <h3>Índice de Oportunidade (Módulo 1)</h3>
+      <div class="formula">
+        IO = (população ÷ concorrentes) × renda_normalizada × fator_TEIA
+      </div>
+      <ul class="fatores">
+        <li><b>População:</b> demanda potencial.</li>
+        <li><b>Concorrentes:</b> MEIs do mesmo CNAE no distrito.</li>
+        <li><b>Renda normalizada:</b> renda média dividida pela maior renda entre os distritos.</li>
+        <li><b>Fator TEIA:</b> 1,0 se o distrito possui TEIA; 0,8 se não possui.</li>
+      </ul>
+
+      <h3>Índice de Cobertura (Módulo 2)</h3>
+      <div class="formula">
+        Cobertura = 0,7 × proximidade + 0,3 × capacitações
+      </div>
+      <ul class="fatores">
+        <li><b>Proximidade:</b> 1 − (distância até o TEIA mais próximo ÷ 10 km), limitado entre 0 e 1.</li>
+        <li><b>Capacitações:</b> nº de capacitações no TEIA mais próximo ÷ 5, limitado a 1.</li>
+        <li><b>Pesos:</b> 70% proximidade + 30% capacitações.</li>
+      </ul>
+
+      <h3>Escalas de interpretação</h3>
+      <div class="escala-cores">
+        <div class="escala-item"><span class="escala-cor" style="background:#1a9850"></span> Alto (≥ 75%)</div>
+        <div class="escala-item"><span class="escala-cor" style="background:#a6d96a"></span> Médio-alto (50–75%)</div>
+        <div class="escala-item"><span class="escala-cor" style="background:#fee08b"></span> Médio (30–50%)</div>
+        <div class="escala-item"><span class="escala-cor" style="background:#f46d43"></span> Baixo (15–30%)</div>
+        <div class="escala-item"><span class="escala-cor" style="background:#d73027"></span> Muito baixo (&lt; 15%)</div>
+      </div>
+
+      <h3>Outras escolhas técnicas</h3>
+      <ul class="fatores">
+        <li><b>Site estático (HTML + CSS + JS):</b> não exige instalação de Python nem servidor; a banca testa abrindo o arquivo no navegador.</li>
+        <li><b>Leaflet + OpenStreetMap França:</b> biblioteca leve, sem API key, funciona localmente.</li>
+        <li><b>Dados embutidos em JavaScript:</b> elimina a dependência de pastas externas e garante que a aplicação funcione em qualquer ambiente.</li>
+      </ul>
+    </section>
+
+    <!-- 7. IA -->
+    <section class="secao" id="ia">
+      <h2>7. 🤖 Uso de Inteligência Artificial</h2>
+      <p>
+        Conforme previsto no edital, o uso de ferramentas de inteligência
+        artificial generativa foi <b>opcional</b> e está documentado abaixo.
+      </p>
+
+      <h3>Ferramentas utilizadas</h3>
+      <ul class="fatores">
+        <li><b>ChatGPT</b> — estruturação do projeto, geração de código, redação da documentação.</li>
+      </ul>
+
+      <h3>Etapas em que a IA foi empregada</h3>
+      <ul class="fatores">
+        <li>Definição da arquitetura da aplicação (dois módulos + documentação).</li>
+        <li>Geração dos scripts de cálculo dos índices (IO e Cobertura).</li>
+        <li>Criação do layout e da identidade visual.</li>
+        <li>Redação e revisão da documentação.</li>
+      </ul>
+
+      <h3>Como os resultados foram avaliados</h3>
+      <ul class="fatores">
+        <li>Todo o código gerado foi <b>testado localmente</b> no navegador.</li>
+        <li>Os dados foram <b>conferidos nas fontes originais</b> (IBGE, Mapa da Desigualdade, Observatório MEI, site da ADE SAMPA).</li>
+        <li>Os trechos gerados foram <b>ajustados manualmente</b> para corrigir inconsistências e adaptar ao contexto da ADE SAMPA.</li>
+      </ul>
+    </section>
+
+    <!-- 8. Limitações -->
+    <section class="secao" id="limitacoes">
+      <h2>8. ⚠️ Limitações e melhorias futuras</h2>
+
+      <h3>Limitações identificadas</h3>
+      <ul class="fatores">
+        <li><b>Dados sintéticos</b> para a distribuição de MEIs por CNAE e para a agenda de capacitações.</li>
+        <li><b>Índices heurísticos</b>, não modelos estatísticos validados.</li>
+        <li><b>Sem dados em tempo real</b> — as bases são estáticas.</li>
+        <li><b>Malha geoespacial simplificada</b> — os distritos são representados por marcadores, não por polígonos oficiais.</li>
+      </ul>
+
+      <h3>Possíveis evoluções</h3>
+      <ul class="fatores">
+        <li>Substituir os dados sintéticos pelos <b>dados reais do Observatório MEI</b> (distribuição por CNAE e distrito).</li>
+        <li>Integrar com a <b>API do SAADE</b> para consumo automático de dados.</li>
+        <li>Adicionar <b>séries temporais</b> para acompanhar a evolução da concorrência e da cobertura.</li>
+        <li>Incluir camadas de <b>equipamentos públicos</b> (UBS, escolas) e concorrência por raio de influência.</li>
+        <li>Integrar a <b>agenda oficial de capacitações</b> da ADE SAMPA.</li>
+      </ul>
+    </section>
+
+  </main>
+
+  <footer>
+    Prova Técnica Prática — Edital nº 005/2026 — Assistente II — Dados e IA — ADE SAMPA
+  </footer>
+</body>
+</html>
